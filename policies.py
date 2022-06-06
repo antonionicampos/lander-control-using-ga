@@ -27,6 +27,6 @@ class NN:
         self.bias2 = genes[-self.output_dim:].reshape(-1, 1)
 
     def __call__(self, x: np.array):
-        hidden = self.relu(self.weights1 @ x.reshape(-1, 1) + self.bias1)
+        hidden = np.tanh(self.weights1 @ x.reshape(-1, 1) + self.bias1)
         output = softmax(self.weights2 @ hidden + self.bias2)
         return np.argmax(output).item()
