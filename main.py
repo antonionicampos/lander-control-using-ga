@@ -156,6 +156,7 @@ if __name__ == "__main__":
     n_gens = 1000
     pop_size = 100
     hidden_units = 128
+    
     es = EvolutionStrategy(pop_size=pop_size, hidden_units=hidden_units)
 
     start = datetime.now()
