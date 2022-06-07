@@ -10,14 +10,14 @@ from policies import NN
 
 class EvolutionStrategy:
     
-    def __init__(self, pop_size=50):
+    def __init__(self, pop_size=50, hidden_units=128):
         # Initializing gym environment
         env = gym.make("LunarLander-v2")
 
         self.input_dim = env.observation_space.shape[0]
         self.output_dim = env.action_space.n
         env.close()
-        self.hidden_units = 128
+        self.hidden_units = hidden_units
 
         self.policy = NN(input_dim=self.input_dim, output_dim=self.output_dim, hidden_units=self.hidden_units)
         self.dim = self.policy.params_size()
@@ -70,7 +70,6 @@ class EvolutionStrategy:
         new_strat = strat * np.exp(self.tau1 * np.random.normal(size=(strat.shape[1]))) * np.exp(self.tau2 * np.random.normal(size=strat.shape))
         new_strat = np.where(new_strat > self.sigma_min, new_strat, self.sigma_min)
         new_genes = genes + new_strat * np.random.normal(size=genes.shape)
-        print(np.r_[new_genes, new_strat].shape)
         
         return np.r_[new_genes, new_strat]
 
@@ -118,9 +117,10 @@ class EvolutionStrategy:
     def run(self, n_gens=10, sigma_min=0.00001):
         best_fitness_per_gen = np.empty(n_gens)
         avg_fitness_per_gen = np.empty(n_gens)
+
+        filename = f'hidden_units_{self.hidden_units}_pop_size_{self.pop_size}'
         
         self.sigma_min = sigma_min
-        # self.fitness(self.pop[:, [0]], gif={'create': True, 'gen': 0})
         
         for gen in range(int(n_gens)):
             parents = self.parents_selection()
@@ -136,6 +136,12 @@ class EvolutionStrategy:
             avg_fitness_per_gen[gen] = np.mean(best_fitnesses)
             
             self.pop = mutant_children[:, best_indices]
+
+            if gen % 100 == 99: 
+                np.savez(f'.\\results\\temp_gen_{gen+1}_{filename}', 
+                         pop=self.pop, 
+                         best_fitness_per_gen=best_fitness_per_gen, 
+                         avg_fitness_per_gen=avg_fitness_per_gen)
             
             sys.stdout.write("\rGeneration {}, Elapsed Time {}".format(gen+1, elapsed_time))
             sys.stdout.flush()
@@ -147,16 +153,18 @@ class EvolutionStrategy:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    es = EvolutionStrategy(pop_size=100)
     n_gens = 1000
+    pop_size = 100
+    hidden_units = 128
+    es = EvolutionStrategy(pop_size=pop_size, hidden_units=hidden_units)
 
     start = datetime.now()
     pop, best_fitness_per_gen, avg_fitness_per_gen = es.run(n_gens=n_gens)
     print(f'Exec Time: {datetime.now() - start}')
     
-    filename = f'gen-{n_gens}_hidden_units-{128}'
+    filename = f'gen_{n_gens}_hidden_units_{hidden_units}_pop_size_{pop_size}'
 
-    np.savez(f'results_{filename}', 
+    np.savez(f'.\\results\\results_{filename}', 
              pop=pop, 
              best_fitness_per_gen=best_fitness_per_gen, 
              avg_fitness_per_gen=avg_fitness_per_gen)
@@ -167,5 +175,6 @@ if __name__ == "__main__":
     ax.set_ylabel('Best Fitness')
     ax.set_xlabel('Generation')
     ax.grid()
-    plt.savefig(f'plot_{filename}.png', dpi=500)
+
+    plt.savefig(f'.\\plots\\plot_{filename}.png', dpi=500)
     plt.show()
