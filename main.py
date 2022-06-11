@@ -162,8 +162,6 @@ class EvolutionStrategy:
         ax.set_xlabel('Generation')
         ax.grid()
 
-        plt.savefig(f'.\\results\\{self.folder}\\plot_gen_{gen+1}.png', dpi=500)
-
         print(f'\ngen {gen+1}, best fitnesses: {best_fitnesses[-5:]}')
         return self.pop, best_fitness_per_gen, avg_fitness_per_gen
 
