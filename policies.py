@@ -21,12 +21,12 @@ class NN:
         w1_size = self.input_dim*self.hidden_units
         w2_size = self.hidden_units*self.output_dim
 
-        self.weights1 = genes[:w1_size].reshape(self.hidden_units, self.input_dim)
-        self.weights2 = genes[w1_size:(w1_size + w2_size)].reshape(self.output_dim, self.hidden_units)
-        self.bias1 = genes[-(self.output_dim + self.hidden_units):-self.output_dim].reshape(-1, 1)
-        self.bias2 = genes[-self.output_dim:].reshape(-1, 1)
+        self.weights1 = genes[:w1_size].reshape(self.hidden_units, self.input_dim).copy()
+        self.weights2 = genes[w1_size:(w1_size + w2_size)].reshape(self.output_dim, self.hidden_units).copy()
+        self.bias1 = genes[-(self.output_dim + self.hidden_units):-self.output_dim].reshape(-1, 1).copy()
+        self.bias2 = genes[-self.output_dim:].reshape(-1, 1).copy()
 
     def __call__(self, x: np.array):
-        hidden = np.tanh(self.weights1 @ x.reshape(-1, 1) + self.bias1)
+        hidden = np.tanh(self.weights1 @ x.reshape(-1, 1).copy() + self.bias1)
         output = softmax(self.weights2 @ hidden + self.bias2)
         return np.argmax(output).item()
