@@ -5,28 +5,36 @@ from scipy.special import softmax
 
 class NN:
 
-    relu = lambda self, x: np.maximum(x, 0)
-
-    def __init__(self, input_dim: int, output_dim: int, hidden_units: int = 64):
+    def __init__(self, input_dim: int, output_dim: int, hidden_units: list = [64, 64]):
         self.input_dim = input_dim
         self.hidden_units = hidden_units
         self.output_dim = output_dim
+        self.all_units = [self.input_dim, *self.hidden_units, self.output_dim]
 
     def params_size(self):
-        input_to_hidden = self.hidden_units * self.input_dim + self.hidden_units
-        hidden_to_output = self.output_dim * self.hidden_units + self.output_dim
-        return input_to_hidden + hidden_to_output
+        dim = 0
+        for index in range(1, len(self.all_units)):
+            dim += self.all_units[index] * self.all_units[index - 1] + self.all_units[index]
+        return dim
 
     def set_weights(self, genes):
-        w1_size = self.input_dim*self.hidden_units
-        w2_size = self.hidden_units*self.output_dim
-
-        self.weights1 = genes[:w1_size].reshape(self.hidden_units, self.input_dim).copy()
-        self.weights2 = genes[w1_size:(w1_size + w2_size)].reshape(self.output_dim, self.hidden_units).copy()
-        self.bias1 = genes[-(self.output_dim + self.hidden_units):-self.output_dim].reshape(-1, 1).copy()
-        self.bias2 = genes[-self.output_dim:].reshape(-1, 1).copy()
+        self.params = []
+        current_index = 0
+        for index in range(1, len(self.all_units)):
+            input_dim, output_dim = self.all_units[index - 1], self.all_units[index]
+            bias_current_index = current_index + input_dim*output_dim
+            weights = genes[current_index:current_index+input_dim*output_dim]
+            biases = genes[bias_current_index:bias_current_index + output_dim]
+            self.params.append({
+                'weights': weights.reshape(output_dim, input_dim).copy(), 
+                'biases': biases.reshape(-1, 1).copy()
+            })
+            current_index += input_dim*output_dim + output_dim
 
     def __call__(self, x: np.array):
-        hidden = np.tanh(self.weights1 @ x.reshape(-1, 1).copy() + self.bias1)
-        output = softmax(self.weights2 @ hidden + self.bias2)
+        output = x.reshape(-1, 1).copy()
+        for layer in self.params:
+            weights, biases = layer['weights'], layer['biases']
+            output = np.tanh(weights @ output + biases)
+        output = softmax(output)
         return np.argmax(output).item()
